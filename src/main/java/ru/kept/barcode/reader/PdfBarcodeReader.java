@@ -31,8 +31,8 @@ class PdfBarcodeReader {
 
         List<File> filesForDeleting = new ArrayList<>();
 
-        String tmpdir = System.getProperty("java.io.tmpdir");
-        File pdfTmpFile = new File(tmpdir + "\\test.pdf");
+        File pdfTmpFile = File.createTempFile("recognizablePDF", ".pdf");
+
         filesForDeleting.add(pdfTmpFile);
         multipartFile.transferTo(pdfTmpFile);
 
@@ -49,10 +49,10 @@ class PdfBarcodeReader {
                 image = reduceNoise(image);
                 toGrayscale(image);
 
-                File outputfile = new File(tmpdir + "\\_page" + page + ".png");
-                filesForDeleting.add(outputfile);
-                ImageIO.write(image, "png", outputfile);
-                String barcodeData = readBarcodeFromFile(outputfile.getAbsolutePath());
+                File outputFile = File.createTempFile("_page" + page,".png");
+                filesForDeleting.add(outputFile);
+                ImageIO.write(image, "png", outputFile);
+                String barcodeData = readBarcodeFromFile(outputFile.getAbsolutePath());
 
                 listOfBarcodes.add(new BarcodeInformation(page + 1, barcodeData));
                 log.info("Barcode on page " + (page + 1) + ": " + barcodeData);
@@ -62,11 +62,8 @@ class PdfBarcodeReader {
             throw new RuntimeException(e);
         }finally {
             for (File file: filesForDeleting) {
-
                 Files.deleteIfExists(file.toPath());
-
             }
-
         }
 
         return listOfBarcodes;
