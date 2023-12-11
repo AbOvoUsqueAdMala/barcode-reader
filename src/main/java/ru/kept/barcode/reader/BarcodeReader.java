@@ -23,4 +23,9 @@ public class BarcodeReader {
         return ResponseEntity.ok(barcodeInformation);
     }
 
+    @GetMapping("check")
+    public ResponseEntity<String> checkAvailability(){
+        return ResponseEntity.ok("ok");
+    }
+
 }
