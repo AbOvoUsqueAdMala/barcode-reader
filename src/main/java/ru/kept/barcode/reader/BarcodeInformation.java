@@ -9,5 +9,6 @@ public class BarcodeInformation {
 
     Integer pageNumber;
     String barcode;
+    String fileName;
 
 }

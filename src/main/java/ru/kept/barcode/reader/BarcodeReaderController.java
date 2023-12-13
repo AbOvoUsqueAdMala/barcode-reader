@@ -1,31 +1,36 @@
 package ru.kept.barcode.reader;
 
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("")
-public class BarcodeReader {
+public class BarcodeReaderController {
 
-    @PostMapping("/read-pdf")
+    FileService fileService = new FileService();
+
+    @PostMapping("read-pdf")
     public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file) throws IOException {
 
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body("Пожалуйста, выберите файл");
-        }
+        if (file.isEmpty())
+            return ResponseEntity.notFound().build();
 
-        List<BarcodeInformation> barcodeInformation  = PdfBarcodeReader.readBarcodeFromPdf(file);
+        return ResponseEntity.ok(PdfBarcodeReaderUtil.readBarcodeFromPdf(file));
 
-        return ResponseEntity.ok(barcodeInformation);
     }
 
     @GetMapping("check")
     public ResponseEntity<String> checkAvailability(){
         return ResponseEntity.ok("ok");
+    }
+
+    @GetMapping("get-pdf")
+    public ResponseEntity<Resource> getImage(@RequestParam String fileName) throws IOException {
+        return fileService.getPdf(fileName);
     }
 
 }

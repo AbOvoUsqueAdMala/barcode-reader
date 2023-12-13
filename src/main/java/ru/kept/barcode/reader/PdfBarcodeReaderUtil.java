@@ -6,6 +6,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.io.RandomAccessReadBufferedFile;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
@@ -25,7 +26,9 @@ import java.nio.file.Files;
 
 @Log4j2
 @UtilityClass
-class PdfBarcodeReader {
+class PdfBarcodeReaderUtil {
+
+    FileService fileService = new FileService();
 
     public static List<BarcodeInformation> readBarcodeFromPdf(MultipartFile multipartFile) throws IOException, RuntimeException {
 
@@ -49,12 +52,21 @@ class PdfBarcodeReader {
                 image = reduceNoise(image);
                 toGrayscale(image);
 
-                File outputFile = File.createTempFile("_page" + page,".png");
-                filesForDeleting.add(outputFile);
-                ImageIO.write(image, "png", outputFile);
-                String barcodeData = readBarcodeFromFile(outputFile.getAbsolutePath());
+                File pdfTempFile = File.createTempFile("PDF_page_" + (page + 1) + "_", ".pdf");
+                PDPage pdPage = document.getPage(page);
+                try (PDDocument newDocument = new PDDocument()) {
+                    newDocument.addPage(pdPage);
+                    newDocument.save(pdfTempFile);
+                }
 
-                listOfBarcodes.add(new BarcodeInformation(page + 1, barcodeData));
+                fileService.addFile(pdfTempFile);//files will be deleted after they are received and when the application is finished
+
+                File imageTempFile = File.createTempFile("_page" + page,".png");
+                filesForDeleting.add(imageTempFile); //Image  should be deleted after recognition of the barcode
+                ImageIO.write(image, "png", imageTempFile);
+                String barcodeData = readBarcodeFromFile(imageTempFile.getAbsolutePath());
+
+                listOfBarcodes.add(new BarcodeInformation(page + 1, barcodeData, pdfTempFile.getName()));
                 log.info("Barcode on page " + (page + 1) + ": " + barcodeData);
             }
 
