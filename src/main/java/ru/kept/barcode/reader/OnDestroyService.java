@@ -8,10 +8,9 @@ import org.springframework.stereotype.Service;
 @Log4j2
 public class OnDestroyService {
 
-    FileService fileService = new FileService();
     @PreDestroy
-    public void onDestroy() {
-        fileService.deleteAllFiles();
+    public static void onDestroy() {
+        FileService.deleteAllFiles();
         log.info("All temp files are deleted");
     }
 

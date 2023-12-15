@@ -28,8 +28,6 @@ import java.nio.file.Files;
 @UtilityClass
 class PdfBarcodeReaderUtil {
 
-    FileService fileService = new FileService();
-
     public static List<BarcodeInformation> readBarcodeFromPdf(MultipartFile multipartFile) throws IOException, RuntimeException {
 
         List<File> filesForDeleting = new ArrayList<>();
@@ -58,8 +56,6 @@ class PdfBarcodeReaderUtil {
                     newDocument.addPage(pdPage);
                     newDocument.save(pdfTempFile);
                 }
-
-                fileService.addFile(pdfTempFile);//files will be deleted after they are received and when the application is finished
 
                 File imageTempFile = File.createTempFile("_page" + page,".png");
                 filesForDeleting.add(imageTempFile); //Image  should be deleted after recognition of the barcode

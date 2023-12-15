@@ -14,19 +14,26 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Log4j2
 public class FileService {
 
-    private final List<File> filesForDeleting = Collections.synchronizedList(new ArrayList<>());
+    private static final String TMP = System.getProperty("java.io.tmpdir");
+    private static final Set<File> receivedFiles = Collections.synchronizedSet(new HashSet<>());
+    private static final Set<File> allTempFiles = Collections.synchronizedSet(new HashSet<>());
 
-    public ResponseEntity<Resource> getPdf(String fileName) throws IOException {
+    public static ResponseEntity<Resource> getPdf(String fileName) throws IOException {
 
-        Path path = Paths.get(System.getProperty("java.io.tmpdir"), fileName);
+        Path path = Paths.get(TMP, fileName);
+
+        if (!Files.exists(path)) {
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
         Resource resource = new ByteArrayResource(Files.readAllBytes(path));
 
         HttpHeaders headers = new HttpHeaders();
@@ -43,31 +50,35 @@ public class FileService {
 
     }
 
-    public synchronized void addFile(File file) {
-        filesForDeleting.add(file);
+    public static synchronized void addFile(File file) {
+        receivedFiles.add(file);
     }
 
-    public void deleteFile(String absolutePath) {
-        File file = getFileByName(absolutePath);
-        if (file.delete()) {
-            filesForDeleting.remove(file);
-        }
+    public static synchronized void deleteReceivedFiles() {
+
+        receivedFiles.forEach(file -> {
+            file.delete();
+            log.info("file " + file.getAbsolutePath() + " deleted");
+            });
+
+        receivedFiles.clear();
+
     }
 
-    public File getFileByName(String absolutePath) {
-        return filesForDeleting.stream()
-                .filter(file -> file.getAbsolutePath().equals(absolutePath))
-                .findFirst()
-                .orElse(null);
-    }
+    public static synchronized void deleteAllFiles() {
 
-    public synchronized void deleteAllFiles() {
-        filesForDeleting.forEach(file -> log.info("file " + file.getAbsolutePath() + " deleted"));
+        allTempFiles.forEach(file -> {
+            file.delete();
+            log.info("file " + file.getAbsolutePath() + " deleted");
+        });
+
+        allTempFiles.clear();
+
     }
 
     @Scheduled(fixedRate=10000)
     public void deleteFiles() {
-        deleteAllFiles();
+        deleteReceivedFiles();
     }
 
 }

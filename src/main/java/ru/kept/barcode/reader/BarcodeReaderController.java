@@ -11,8 +11,6 @@ import java.io.IOException;
 @RequestMapping("")
 public class BarcodeReaderController {
 
-    FileService fileService = new FileService();
-
     @PostMapping("read-pdf")
     public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file) throws IOException {
 
@@ -30,7 +28,7 @@ public class BarcodeReaderController {
 
     @GetMapping("get-pdf")
     public ResponseEntity<Resource> getImage(@RequestParam String fileName) throws IOException {
-        return fileService.getPdf(fileName);
+        return FileService.getPdf(fileName);
     }
 
 }
